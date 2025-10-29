@@ -8,8 +8,10 @@ const validateFields = require('../../utils/validateFiled');
 // 📌 Inscription partenaire
 const registerPartner = async (req, res) => {
   try {
-    const requiredFields = ['enterpriseName', 'latitude', 'longitude', 'password', 'email', 'phoneNumber', 'address', 'country', 'contrat', 'authType'];
+    const requiredFields = ['enterpriseName', 'latitude', 'longitude', 'password', 'email', 'phoneNumber', 'address', 'country', 'contrat'];
     const errors = validateFields(requiredFields, req.body);
+
+    const {enterpriseName, latitude, longitude, password, email, phoneNumber, address, country, contrat} = req.body
 
     if (errors.length > 0) {
     return errorResponse(res, 'Champs obligatoires manquants.', errors, 400);
@@ -24,9 +26,21 @@ const registerPartner = async (req, res) => {
         400
       );
     }
-
-    const partner = new Partner(req.body);
+    
+     const partner = new Partner({
+      enterpriseName, 
+      latitude, 
+      longitude, 
+      password, 
+      email, 
+      phoneNumber, 
+      address, 
+      country, 
+      contrat,
+      authType: "password"
+    });
     await partner.save();
+  
 
     return successResponse(res, 'Partenaire inscrit avec succès.', {}, 201);
   } catch (error) {
