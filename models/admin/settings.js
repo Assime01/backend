@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const rateSchema = new Schema({
+const settingsSchema = new Schema({
   rate: {
     type: Number,
     required: true
@@ -17,6 +17,6 @@ const rateSchema = new Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Rate', rateSchema);
+module.exports = mongoose.model('Settings', settingsSchema);
 
 

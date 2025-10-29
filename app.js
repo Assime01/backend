@@ -2,7 +2,7 @@ const express = require('express');
 // Administrateur
 const adminRoutes = require('./routes/admin/adminRoutes');
 const categoryRoutes = require('./routes/admin/categoryRoutes');
-const rateRoutes = require('./routes/admin/rateRoutes');
+const settingsRoute = require('./routes/admin/settingsRoutes');
 
 //Partenaires
 const authPartnerRoutes = require('./routes/partenaire/authPartnerRoutes');
@@ -35,7 +35,9 @@ app.use((req, res, next) => {
 // Utilisation des routes Admin
 app.use('/api/admin', adminRoutes);
 app.use('/api/category', categoryRoutes);
-app.use('/api/rate', rateRoutes);
+app.use('/api/settings', settingsRoute);
+
+
 
 //Utilisation des routes Partenaires
 app.use('/api/authPartner', authPartnerRoutes);

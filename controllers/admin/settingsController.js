@@ -1,9 +1,9 @@
-const Rate = require('../../models/admin/admin');
+const settings = require('../../models/admin/settings');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
 
 // 🔹 Définir ou mettre à jour un taux
-const setRate = async (req, res) => {
+const setSettings = async (req, res) => {
   try {
     if (req.admin.role !== 'superadmin') {
       return errorResponse(res, "Accès refusé. Seul un superadmin peut définir le taux.", [], 403);
@@ -16,43 +16,43 @@ const setRate = async (req, res) => {
       return errorResponse(res, "Champs obligatoires manquants.", errors, 422);
     }
 
-    let existingRate = await Rate.findOne();
+    let existingsettings = await settings.findOne();
 
-    if (existingRate) {
-      existingRate.rate = rate;
-      existingRate.description = description;
-      existingRate.updatedBy = req.admin._id;
-      await existingRate.save();
-      return successResponse(res, "Taux mis à jour avec succès.", existingRate);
+    if (existingsettings) {
+      existingsettings.settings = settings;
+      existingsettings.description = description;
+      existingsettings.updatedBy = req.admin._id;
+      await existingsettings.save();
+      return successResponse(res, "Taux mis à jour avec succès.", existingsettings);
     } else {
-      const newRate = new Rate({
-        rate,
+      const newsettings = new settings({
+        settings,
         description,
         updatedBy: req.admin._id
       });
-      await newRate.save();
-      return successResponse(res, "Taux défini avec succès.", newRate, 201);
+      await newsettings.save();
+      return successResponse(res, "Taux défini avec succès.", newsettings, 201);
     }
   } catch (error) {
-    console.error('Erreur setRate :', error);
+    console.error('Erreur setsettings :', error);
     return errorResponse(res, "Erreur serveur", [{ message: error.message }], 500);
   }
 };
 
 // 🔹 Récupérer le taux actuel
-const getRate = async (req, res) => {
+const getSettings = async (req, res) => {
   try {
-    const rate = await Rate.findOne().populate('updatedBy', 'firstName lastName role');
+    const settings = await settings.findOne().populate('updatedBy', 'firstName lastName role');
 
-    if (!rate) {
+    if (!settings) {
       return errorResponse(res, "Aucun taux défini pour l'instant.", [], 404);
     }
 
-    return successResponse(res, "Taux récupéré avec succès.", rate);
+    return successResponse(res, "Taux récupéré avec succès.", settings);
   } catch (error) {
-    console.error('Erreur getRate :', error);
+    console.error('Erreur getsettings :', error);
     return errorResponse(res, "Erreur serveur", [{ message: error.message }], 500);
   }
 };
 
-module.exports = { setRate, getRate };
+module.exports = { setSettings, getSettings };
