@@ -45,7 +45,7 @@ const partnerSchema = new mongoose.Schema({
         default: false, 
         required: true 
     },
-    authType: { type: String, enum: ['password', 'google'],  default: 'google', required: true },
+    authType: { type: String, enum: ['password', 'google'],  default: 'password' },
     googleOAuth: { type: String, required: function() { return this.authType === 'google'; } }
 }, { timestamps: true });
 
