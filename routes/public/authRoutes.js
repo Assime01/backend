@@ -1,6 +1,7 @@
 const express = require('express');
 const { registerUser, loginUser, logoutUser, googleAuth, getUserProfile } = require('../../controllers/public/authController');
 const { authMiddleware } = require('../../middlewares/public/authMiddleware');
+const { authAdminMiddleware } = require('../../middlewares/admin/authAdminMiddleware');
 
 const router = express.Router();
 
