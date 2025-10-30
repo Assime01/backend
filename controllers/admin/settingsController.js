@@ -1,4 +1,4 @@
-const settings = require('../../models/admin/settings');
+const Settings = require('../../models/admin/settings');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
 
@@ -16,26 +16,26 @@ const setSettings = async (req, res) => {
       return errorResponse(res, "Champs obligatoires manquants.", errors, 422);
     }
 
-    let existingsettings = await settings.findOne();
+    // Vérifie si un paramètre existe déjà
+    let existingSettings = await Settings.findOne();
 
-    if (existingsettings) {
-      existingsettings.settings = settings;
-      existingsettings.rate = rate;
-      existingsettings.description = description;
-      existingsettings.updatedBy = req.admin._id;
-      await existingsettings.save();
-      return successResponse(res, "Taux mis à jour avec succès.", existingsettings);
+    if (existingSettings) {
+      existingSettings.rate = rate;
+      existingSettings.description = description;
+      existingSettings.updatedBy = req.admin._id;
+      await existingSettings.save();
+      return successResponse(res, "Taux mis à jour avec succès.", existingSettings);
     } else {
-      const newsettings = new settings({
-        settings,
+      const newSettings = new Settings({
+        rate,
         description,
         updatedBy: req.admin._id
       });
-      await newsettings.save();
-      return successResponse(res, "Taux défini avec succès.", newsettings, 201);
+      await newSettings.save();
+      return successResponse(res, "Taux défini avec succès.", newSettings, 201);
     }
   } catch (error) {
-    console.error('Erreur setsettings :', error);
+    console.error('Erreur setSettings :', error);
     return errorResponse(res, "Erreur serveur", [{ message: error.message }], 500);
   }
 };
@@ -43,7 +43,7 @@ const setSettings = async (req, res) => {
 // 🔹 Récupérer le taux actuel
 const getSettings = async (req, res) => {
   try {
-    const settings = await settings.findOne().populate('updatedBy', 'firstName lastName role');
+    const settings = await Settings.findOne().populate('updatedBy', 'firstName lastName role');
 
     if (!settings) {
       return errorResponse(res, "Aucun taux défini pour l'instant.", [], 404);
@@ -51,7 +51,7 @@ const getSettings = async (req, res) => {
 
     return successResponse(res, "Taux récupéré avec succès.", settings);
   } catch (error) {
-    console.error('Erreur getsettings :', error);
+    console.error('Erreur getSettings :', error);
     return errorResponse(res, "Erreur serveur", [{ message: error.message }], 500);
   }
 };
