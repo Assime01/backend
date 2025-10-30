@@ -2,6 +2,7 @@
 const Product = require('../../models/partenaire/product');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
+const getSetting = require('../../utils/admin/settingsUtils')
 
 // 🔹 Ajouter un produit (lié au partenaire connecté)
 const createProduct = async (req, res) => {
@@ -43,16 +44,47 @@ const createProduct = async (req, res) => {
 };
 
 // 🔹 Obtenir tous les produits (usage admin)
+// const getAllProducts = async (req, res) => {
+//   try {
+//     const products = await Product.find();
+//     return successResponse(res, 'Liste des produits récupérée avec succès', products);
+//   } catch (err) {
+//     return errorResponse(res, 'Erreur lors de la récupération des produits', [{ message: err.message }], 500);
+//   }
+// };
+
+// 🔹 Obtenir tous les produits (avec prix modifié temporairement)
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find().select('name description price partnerId images');
+    // Récupération de tous les produits
+    const products = await Product.find();
 
-//    const products = await Product.find().select('name price currency stock');
-    return successResponse(res, 'Liste des produits récupérée avec succès', products);
+    // Exemple : on augmente ou réduit les prix avant de les renvoyer
+    const modifiedProducts = products.map(product => {
+      // Cloner l’objet (pour ne pas toucher à Mongoose directement)
+      const p = product.toObject();
+
+      // Exemple : appliquer une réduction de 10 %
+      p.price = p.price * getSetting.rate;
+
+      // Tu peux aussi arrondir :
+      // p.price = Math.round(p.price * 0.9 * 100) / 100;
+
+      return p;
+    });
+
+    return successResponse(res, 'Liste des produits (prix modifié) récupérée avec succès', modifiedProducts);
   } catch (err) {
-    return errorResponse(res, 'Erreur lors de la récupération des produits', [{ message: err.message }], 500);
+    return errorResponse(
+      res,
+      'Erreur lors de la récupération des produits',
+      [{ message: err.message }],
+      500
+    );
   }
 };
+
+
 
 // 🔹 Obtenir les produits du partenaire connecté
 const getAllProductsOfOnePartner = async (req, res) => {
