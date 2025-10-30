@@ -5,9 +5,9 @@ const { authAdminMiddleware } = require('../../middlewares/admin/authAdminMiddle
 
 
 // 🔐 Seul un superadmin authentifié peut définir le taux
-router.post('/set', authAdminMiddleware, setSettings);
+router.put('/set', authAdminMiddleware, setSettings);
 
 // 📖 Accessible à tous les utilisateurs connectés
-router.get('/', authAdminMiddleware, getSettings);
+router.get('/', getSettings);
 
 module.exports = router;
