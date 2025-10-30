@@ -63,11 +63,12 @@ const getAllProducts = async (req, res) => {
     // Exemple : on augmente ou réduit les prix avant de les renvoyer
     const modifiedProducts = products.map(product => {
       // Cloner l’objet (pour ne pas toucher à Mongoose directement)
-      const p = product.toObject();
-      console.log('-------------1-----------------------');
+  
+
+      const  { __v, stock, createdAt, updatedAt, ...p } = product.toObject();
+
       console.log(p.price);
-      // Exemple : appliquer une réduction de 10 %
-      console.log('-------------2-----------------------');
+
       p.price = p.price + p.price * rate;
 
       console.log(p.price);
