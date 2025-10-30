@@ -49,7 +49,7 @@ const getSettings = async (req, res) => {
       return errorResponse(res, "Aucun taux défini pour l'instant.", [], 404);
     }
 
-    return successResponse(res, "Taux récupéré avec succès.", settings);
+    return successResponse(res, "Taux récupéré avec succès.", settings.rate);
   } catch (error) {
     console.error('Erreur getSettings :', error);
     return errorResponse(res, "Erreur serveur", [{ message: error.message }], 500);
