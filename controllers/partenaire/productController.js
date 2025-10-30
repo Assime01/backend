@@ -32,7 +32,6 @@ const createProduct = async (req, res) => {
       categoryId,
       images: imagePaths,
       partnerId: req.partner._id, // ✅ Lien avec le partenaire connecté
-      
     });
 
     const savedProduct = await newProduct.save();
@@ -46,7 +45,9 @@ const createProduct = async (req, res) => {
 // 🔹 Obtenir tous les produits (usage admin)
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().select('name description price partnerId images');
+
+//    const products = await Product.find().select('name price currency stock');
     return successResponse(res, 'Liste des produits récupérée avec succès', products);
   } catch (err) {
     return errorResponse(res, 'Erreur lors de la récupération des produits', [{ message: err.message }], 500);
@@ -58,7 +59,7 @@ const getAllProductsOfOnePartner = async (req, res) => {
   try {
     const partnerId = req.partner._id;
     const products = await Product.find({ partnerId });
-    console.log('Produits du partenaire :', partnerId , ':', products);
+  
     return successResponse(res, 'Liste de vos produits récupérée avec succès', products);
   } catch (err) {
     return errorResponse(res, 'Erreur lors de la récupération des produits', [{ message: err.message }], 500);
