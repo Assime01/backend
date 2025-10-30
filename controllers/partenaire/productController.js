@@ -63,9 +63,13 @@ const getAllProducts = async (req, res) => {
     const modifiedProducts = products.map(product => {
       // Cloner l’objet (pour ne pas toucher à Mongoose directement)
       const p = product.toObject();
-
+      console.log('-------------1-----------------------');
+      console.log(p.price);
       // Exemple : appliquer une réduction de 10 %
-      p.price = p.price * getSetting.rate;
+      console.log('-------------2-----------------------');
+      p.price = p.price + p.price * getSetting.rate;
+
+      console.log(p.price);
 
       // Tu peux aussi arrondir :
       // p.price = Math.round(p.price * 0.9 * 100) / 100;
