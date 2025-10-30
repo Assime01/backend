@@ -20,6 +20,7 @@ const setSettings = async (req, res) => {
 
     if (existingsettings) {
       existingsettings.settings = settings;
+      existingsettings.rate = rate;
       existingsettings.description = description;
       existingsettings.updatedBy = req.admin._id;
       await existingsettings.save();
