@@ -2,7 +2,7 @@
 const Product = require('../../models/partenaire/product');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
-const getSetting = require('../../utils/admin/settingsUtils')
+const getSettingRate = require('../../utils/admin/settingsUtils')
 
 // 🔹 Ajouter un produit (lié au partenaire connecté)
 const createProduct = async (req, res) => {
@@ -55,6 +55,7 @@ const createProduct = async (req, res) => {
 
 // 🔹 Obtenir tous les produits (avec prix modifié temporairement)
 const getAllProducts = async (req, res) => {
+  rate = await getSettingRate();
   try {
     // Récupération de tous les produits
     const products = await Product.find();
@@ -67,7 +68,7 @@ const getAllProducts = async (req, res) => {
       console.log(p.price);
       // Exemple : appliquer une réduction de 10 %
       console.log('-------------2-----------------------');
-      p.price = p.price + p.price * getSetting.rate;
+      p.price = p.price + p.price * rate;
 
       console.log(p.price);
 
