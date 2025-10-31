@@ -121,5 +121,66 @@ const logoutUser = (req, res) => {
   return successResponse(res, "Déconnexion réussie.", {});
 };
 
+// ✅ Récupérer tous les utilisateurs (ADMIN uniquement)
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    return successResponse(res, "Liste des utilisateurs récupérée avec succès.", users);
+  } catch (error) {
+    return errorResponse(res, "Erreur lors de la récupération des utilisateurs.", [{ message: error.message }], 500);
+  }
+};
 
-module.exports = { registerUser, loginUser, logoutUser, googleAuth, getUserProfile };
+// ✅ Récupérer un utilisateur spécifique (ADMIN ou profil)
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) return errorResponse(res, "Utilisateur non trouvé.", [], 404);
+
+    return successResponse(res, "Utilisateur récupéré avec succès.", user);
+  } catch (error) {
+    return errorResponse(res, "Erreur lors de la récupération de l'utilisateur.", [{ message: error.message }], 500);
+  }
+};
+
+// ✅ Mettre à jour un utilisateur (profil ou ADMIN)
+const updateUser = async (req, res) => {
+  try {
+    const allowedFields = ['firstName', 'lastName', 'email', 'phoneNumber', 'address', 'currencyPref', 'password'];
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field]) updates[field] = req.body[field];
+    }
+
+    // Si le mot de passe est mis à jour, le hacher
+    if (updates.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(updates.password, salt);
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+    if (!user) return errorResponse(res, "Utilisateur non trouvé.", [], 404);
+
+    return successResponse(res, "Utilisateur mis à jour avec succès.", user);
+  } catch (error) {
+    return errorResponse(res, "Erreur lors de la mise à jour de l'utilisateur.", [{ message: error.message }], 500);
+  }
+};
+
+// ✅ Supprimer un utilisateur (ADMIN)
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return errorResponse(res, "Utilisateur non trouvé.", [], 404);
+
+    return successResponse(res, "Utilisateur supprimé avec succès.", {});
+  } catch (error) {
+    return errorResponse(res, "Erreur lors de la suppression de l'utilisateur.", [{ message: error.message }], 500);
+  }
+};
+
+
+
+
+module.exports = { registerUser, loginUser, logoutUser, googleAuth, getUserProfile, getAllUsers, getUserById, updateUser, deleteUser };

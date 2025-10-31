@@ -3,14 +3,25 @@ const Product = require('../../models/partenaire/product');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
 
+const getSettingRate = require('../../utils/admin/settingsUtils')
+
+
+// 🧮 Fonction de calcul du total
+const calculateCartTotal = (products) => {
+  return products.reduce((total, item) => total + item.price * item.quantity, 0);
+};
+
 // ➕ Ajouter au panier
 const addToCart = async (req, res) => {
   try {
-    const errors = validateCart(req.body);
+    const errors = validateFields(['products'], req.body);
     if (errors.length > 0) return errorResponse(res, 'Champs requis manquants.', errors, 422);
 
     const userId = req.user.id;
     const { products, currency = "XOF" } = req.body;
+
+    // 🔹 Récupération du taux courant
+    const rate = await getSettingRate();
 
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = new Cart({ userId, products: [] });
@@ -21,13 +32,18 @@ const addToCart = async (req, res) => {
       if (p.quantity > product.stock) return errorResponse(res, `Quantité supérieure au stock disponible pour ${product.name}`, [], 400);
 
       const index = cart.products.findIndex(cp => cp.productId.toString() === p.productId.toString());
+
+      // 🔹 Application du taux courant (sans modifier la DB)
+      const adjustedPrice = product.price * (1 + rate);
+
       if (index > -1) {
         cart.products[index].quantity += p.quantity;
+        cart.products[index].price = adjustedPrice;
       } else {
         cart.products.push({
           productId: p.productId,
           quantity: p.quantity,
-          price: product.price,
+          price: adjustedPrice,
           currency: "XOF"
         });
       }
@@ -36,18 +52,11 @@ const addToCart = async (req, res) => {
     await cart.save();
 
     const totalXOF = calculateCartTotal(cart.products);
-    let totalConverted = totalXOF;
-
-    if (currency !== "XOF") {
-      const rate = await getExchangeRate(currency);
-      totalConverted = convertPrice(totalXOF, rate);
-    }
 
     return successResponse(res, "Produit ajouté au panier.", { 
       ...cart.toObject(), 
-      total: totalXOF, 
-      totalCurrency: currency, 
-      totalConverted 
+      total: totalXOF,
+      appliedRate: rate
     });
 
   } catch (err) {
@@ -61,27 +70,29 @@ const getCart = async (req, res) => {
     const cart = await Cart.findOne({ userId: req.user.id }).populate('products.productId');
     if (!cart || cart.products.length === 0) return errorResponse(res, "Panier vide", [], 404);
 
-    const totalXOF = calculateCartTotal(cart.products);
-    let totalConverted = totalXOF;
-    const currency = req.query.currency || "XOF";
+    // 🔹 Récupération du taux courant
+    const rate = await getSettingRate();
 
-    if (currency !== "XOF") {
-      const rate = await getExchangeRate(currency);
-      totalConverted = convertPrice(totalXOF, rate);
-    }
+    // 🔹 Recalcul dynamique des prix
+    const updatedProducts = cart.products.map(p => ({
+      ...p.toObject(),
+      price: p.productId.price * (1 + rate)
+    }));
+    console.log();
+
+    const totalXOF = updatedProducts.reduce((total, p) => total + p.price * p.quantity, 0);
 
     return successResponse(res, "Panier récupéré avec succès.", { 
       ...cart.toObject(), 
-      total: totalXOF, 
-      totalCurrency: currency, 
-      totalConverted 
+      products: updatedProducts,
+      total: totalXOF,
+      appliedRate: rate
     });
 
   } catch (err) {
     return errorResponse(res, "Erreur serveur lors de la récupération du panier.", [{ message: err.message }], 500);
   }
 };
-
 // ❌ Supprimer un produit
 const removeFromCart = async (req, res) => {
   try {

@@ -67,7 +67,7 @@ const getAllProducts = async (req, res) => {
 
       const  { __v, stock, createdAt, updatedAt, ...p } = product.toObject();
 
-      p.price = p.price + p.price * rate;
+      p.price = p.price + (1 + rate);
 
       // Tu peux aussi arrondir :
       // p.price = Math.round(p.price * 0.9 * 100) / 100;
