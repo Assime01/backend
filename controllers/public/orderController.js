@@ -4,6 +4,7 @@ const OrderItem = require('../../models/public/orderItem');
 const Product = require('../../models/partenaire/product');
 const { successResponse, errorResponse } = require('../../utils/apiReponse');
 const validateFields = require('../../utils/validateFiled');
+const getSettingRate = require('../../utils/admin/settingsUtils'); // 🔹 Import du taux actuel
 
 // ➕ Créer une commande depuis le panier
 const createOrder = async (req, res) => {
@@ -11,25 +12,31 @@ const createOrder = async (req, res) => {
     const { shippingAddress, paymentMethod } = req.body;
     const userId = req.user.id;
 
+    // 🔹 Récupération du panier
     const cart = await Cart.findOne({ userId });
     if (!cart || cart.products.length === 0)
       return errorResponse(res, "Panier vide.", [], 400);
 
-    // Calcul du total
+    // 🔹 Récupération du taux courant
+    const rate = await getSettingRate();
+
+    // 🔹 Calcul du total avec le taux
     const totalPrice = cart.products.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + (item.price * rate) * item.quantity,
       0
     );
 
+    // 🔹 Création de la commande
     const order = new Order({
       userId,
       totalPrice,
       shippingAddress,
       paymentMethod,
+      appliedRate: rate // 🔹 Sauvegarde du taux appliqué pour traçabilité
     });
     await order.save();
 
-    // Créer les OrderItems et mettre à jour le stock
+    // 🔹 Créer les OrderItems et mettre à jour le stock
     for (const item of cart.products) {
       const product = await Product.findById(item.productId);
       if (!product)
@@ -41,19 +48,26 @@ const createOrder = async (req, res) => {
       product.stock -= item.quantity;
       await product.save();
 
+      // 🔹 Application du taux sans modifier le prix original
+      const priceWithRate = product.price * rate;
+
       await OrderItem.create({
         orderId: order._id,
         productId: item.productId,
         quantity: item.quantity,
-        priceAtOrder: item.price,
+        priceAtOrder: priceWithRate // 🔹 Prix converti au moment de la commande
       });
     }
 
-    // Vider le panier
+    // 🔹 Vider le panier
     cart.products = [];
     await cart.save();
 
-    return successResponse(res, "Commande créée avec succès.", order);
+    return successResponse(res, "Commande créée avec succès.", {
+      ...order.toObject(),
+      appliedRate: rate
+    });
+
   } catch (err) {
     return errorResponse(res, "Erreur lors de la création de la commande.", [{ message: err.message }], 500);
   }
@@ -116,4 +130,4 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getMyOrders, getAllOrders, getOrderById, updateOrder, deleteOrder };
+module.exports = { createOrder, getMyOrders, getAllOrders, getOrderById, updateOrder, deleteOrder};
